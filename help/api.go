@@ -13,14 +13,14 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/redis/go-redis/v9"
 	"github.com/go-sql-driver/mysql"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type Jamet struct {
 	Config map[string]*gorm.DB
-	Redis  FormatRedis
+	Redis  map[string]FormatRedis
 	Log    string
 }
 
@@ -80,7 +80,6 @@ func (met *Jamet) SinchronizeID(db *gorm.DB, id string, char string, format int3
 
 	return fmt.Sprintf("%s%s%s", id, char, value)
 }
-
 
 func (met *Jamet) CreateData(c *gin.Context, table *gorm.DB, field []string) map[string]interface{} {
 
@@ -219,11 +218,11 @@ func InsertData(db *gorm.DB, table string, data any) any {
 }
 
 // CACHE
-func (met *Jamet) ReadCache(previx string) (bool, map[string]interface{}) {
+func (met *Jamet) ReadCache(previx string, d string) (bool, map[string]interface{}) {
 
 	ctx := context.Background()
 
-	format := met.Redis
+	format := met.Redis[d]
 
 	if format.On {
 		client := redis.NewClient(&redis.Options{
@@ -247,15 +246,16 @@ func (met *Jamet) ReadCache(previx string) (bool, map[string]interface{}) {
 	}
 }
 
-func (met *Jamet) WriteCache(previx string, data any) {
+func (met *Jamet) WriteCache(previx string, data any, d string) {
 
 	defer met.ErrorLog()
 
 	ctx := context.Background()
 
-	format := met.Redis
+	format := met.Redis[d]
 
 	if format.On {
+
 		client := redis.NewClient(&redis.Options{
 			Addr:     fmt.Sprintf("%s:%s", format.Host, format.Port),
 			Password: format.Password, // No password set
@@ -273,6 +273,45 @@ func (met *Jamet) WriteCache(previx string, data any) {
 		}
 
 		log.Println(res)
+	}
+}
+
+func (met *Jamet) DelCache(previx string, d string) {
+	defer met.ErrorLog()
+
+	format := met.Redis[d]
+	if format.On {
+
+		client := redis.NewClient(&redis.Options{
+			Addr:     fmt.Sprintf("%s:%s", format.Host, format.Port),
+			Password: format.Password, // No password set
+			DB:       format.Database, // Use default DB
+		})
+
+		ctx := context.Background()
+
+		var keys []string
+		var err error
+		var cursor uint64
+
+		keys, cursor, err = client.Scan(ctx, cursor, fmt.Sprintf("*%s*", previx), 10).Result()
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("number of change", cursor)
+
+		var n int
+		for _, p := range keys {
+			_, err := client.Del(ctx, p).Result()
+			if err != nil {
+				panic(err)
+			}
+
+			n++;
+		}
+
+		fmt.Printf("deleted %d keys\n", n)
 	}
 }
 
@@ -422,7 +461,7 @@ func (met *Jamet) LogSuccess(message string) {
 func (met *Jamet) Logging(body []byte) {
 
 	defer met.ErrorLog()
-	url := met.Log;
+	url := met.Log
 
 	if url != "" {
 		// Create a new HTTP POST request.
@@ -431,21 +470,21 @@ func (met *Jamet) Logging(body []byte) {
 			message := fmt.Sprintf("Error creating request: %s", err)
 			panic(message)
 		}
-	
+
 		req.Header.Set("Content-Type", "application/json")
-	
+
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
 			message := fmt.Sprintf("Error sending request: %s", err)
 			panic(message)
 		}
-	
+
 		defer resp.Body.Close()
-	
+
 		log.Println("Response Status:", resp.Status)
 	}
-	
+
 }
 
 // end update logging
