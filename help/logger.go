@@ -21,6 +21,10 @@ type LoggerConfig struct {
 	Url           string
 }
 
+type Shit struct {
+	Slow string
+}
+
 func NewLogger(config LoggerConfig) *LoggerConfig {
 	return &LoggerConfig{
 		SlowThreshold: config.SlowThreshold,
@@ -63,7 +67,7 @@ func (l *LoggerConfig) Error(ctx context.Context, msg string, data ...interface{
 
 func (l *LoggerConfig) Trace(ctx context.Context, begin time.Time, fc func() (string, int64), err error) {
 	if l.LogLevel > 0 {
-		
+
 		var (
 			tipe    string
 			message string
@@ -77,7 +81,7 @@ func (l *LoggerConfig) Trace(ctx context.Context, begin time.Time, fc func() (st
 
 			tipe = "error"
 			message = fmt.Sprintf("[%.3fms] [rows:%v] %s error: %v", float64(elapsed.Nanoseconds())/1e6, rows, sql, err)
-			
+
 		case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= logger.Warn:
 			sql, rows := fc()
 			l.logger.Printf("[%.3fms] [rows:%v] SLOW SQL >= %v\n%s", float64(elapsed.Nanoseconds())/1e6, rows, l.SlowThreshold, sql)
@@ -113,43 +117,43 @@ func (l *LoggerConfig) _log(tipe string, message string) {
 	defer l.ErrorLog()
 
 	if l.Url != "" {
-		
+
 		data, err := os.ReadFile("go.mod")
 		if err != nil {
 			fmt.Println("Error reading go.mod:", err)
 			return
 		}
-	
+
 		lines := strings.Split(string(data), "\n")
-	
+
 		jsonData, err := json.Marshal(map[string]interface{}{
 			"type":    tipe,
 			"message": message,
 			"module":  strings.Fields(lines[0])[1],
 		})
-	
+
 		if err != nil {
 			panic(err)
 		}
-	
+
 		// Create a new HTTP POST request.
 		req, err := http.NewRequest("POST", l.Url, bytes.NewBuffer(jsonData))
 		if err != nil {
 			message := fmt.Sprintf("Error creating request: %s", err)
 			panic(message)
 		}
-	
+
 		req.Header.Set("Content-Type", "application/json")
-	
+
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
 			message := fmt.Sprintf("Error sending request: %s", err)
 			panic(message)
 		}
-	
+
 		defer resp.Body.Close()
-	
+
 		log.Println("Response Status:", resp.Status)
 	}
 }
