@@ -43,44 +43,6 @@ func (met *Jamet) GetData(table string, connection string) *gorm.DB {
 	return met.Config[connection].Table(table)
 }
 
-func (met *Jamet) Connection(conn string) *gorm.DB {
-	db := met.Config[conn]
-
-	return db.Begin()
-}
-
-func (met *Jamet) SinchronizeID(db *gorm.DB, id string, char string, format int32) string {
-
-	defer met.ErrorLog()
-
-	var getMstRunNum map[string]interface{}
-	db.Table("mst_run_nums").Where(map[string]interface{}{"val_id": id, "val_char": char}).Find(&getMstRunNum)
-
-	var value string
-	if len(getMstRunNum) != 0 {
-
-		num, err := strconv.Atoi(getMstRunNum["val_value"].(string))
-		if err != nil {
-			panic(err)
-		}
-
-		num = num + 1
-		db.Table("mst_run_nums").Where(map[string]interface{}{"val_id": id, "val_char": char}).Updates(map[string]interface{}{"val_value": num})
-
-		value = fmt.Sprintf("%0*d", format, num)
-	} else {
-		value = fmt.Sprintf("%0*d", format, 1)
-		InsertData(db, "mst_run_nums", map[string]interface{}{
-			"id":        UUID(),
-			"val_value": 1,
-			"val_id":    id,
-			"val_char":  char,
-		})
-	}
-
-	return fmt.Sprintf("%s%s%s", id, char, value)
-}
-
 func (met *Jamet) CreateData(c *gin.Context, table *gorm.DB, field []string) map[string]interface{} {
 
 	query := table
@@ -183,6 +145,7 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 	}
 }
 
+//TRANSACTION
 func (met *Jamet) GetRequest(c *gin.Context) []byte {
 
 	defer met.ErrorLog()
@@ -200,6 +163,44 @@ func (met *Jamet) GetRequest(c *gin.Context) []byte {
 	c.Request.Body = body
 
 	return append(mars, buf...)
+}
+
+func (met *Jamet) Connection(conn string) *gorm.DB {
+	db := met.Config[conn]
+
+	return db.Begin()
+}
+
+func (met *Jamet) SinchronizeID(db *gorm.DB, id string, char string, format int32) string {
+
+	defer met.ErrorLog()
+
+	var getMstRunNum map[string]interface{}
+	db.Table("mst_run_nums").Where(map[string]interface{}{"val_id": id, "val_char": char}).Find(&getMstRunNum)
+
+	var value string
+	if len(getMstRunNum) != 0 {
+
+		num, err := strconv.Atoi(getMstRunNum["val_value"].(string))
+		if err != nil {
+			panic(err)
+		}
+
+		num = num + 1
+		db.Table("mst_run_nums").Where(map[string]interface{}{"val_id": id, "val_char": char}).Updates(map[string]interface{}{"val_value": num})
+
+		value = fmt.Sprintf("%0*d", format, num)
+	} else {
+		value = fmt.Sprintf("%0*d", format, 1)
+		InsertData(db, "mst_run_nums", map[string]interface{}{
+			"id":        UUID(),
+			"val_value": 1,
+			"val_id":    id,
+			"val_char":  char,
+		})
+	}
+
+	return fmt.Sprintf("%s%s%s", id, char, value)
 }
 
 func InsertData(db *gorm.DB, table string, data any) any {

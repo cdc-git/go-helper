@@ -157,14 +157,14 @@ func Converter(req any) map[string]interface{} {
 	return objmap[0]
 }
 
-func Unrupiah(nilai string) int {
+func Unrupiah(nilai string) int64 {
 	rupiah := strings.ReplaceAll(nilai, ",", "")
 	result, err := strconv.Atoi(strings.ReplaceAll(rupiah, ".", ""))
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	return result
+	return int64(result)
 }
 
 
