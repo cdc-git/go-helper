@@ -1,4 +1,4 @@
-module go-helper
+module github.com/cdc-git/go-helper
 
 go 1.23.3
 
