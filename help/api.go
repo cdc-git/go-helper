@@ -234,7 +234,8 @@ func (met *Jamet) ReadCache(previx string, d string) (bool, map[string]interface
 
 		val, err := client.Get(ctx, previx).Result()
 		if err != nil {
-			met.LogError(fmt.Sprintf("Gagal dalam menulis cache %s", previx))
+			met.LogError(err.Error())
+			met.LogError(fmt.Sprintf("Gagal dalam membaca cache %s", previx))
 			return false, map[string]interface{}{}
 		}
 
@@ -255,7 +256,7 @@ func (met *Jamet) WriteCache(previx string, data any, d string) {
 
 	format := met.Redis[d]
 
-	if format.On {
+	if format.On && data != nil{
 
 		client := redis.NewClient(&redis.Options{
 			Addr:     fmt.Sprintf("%s:%s", format.Host, format.Port),
