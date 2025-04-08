@@ -188,7 +188,7 @@ func DateFormat(data DateTime) (string,int64) {
 		data.Format = "Y-m-d H:i:s"
 	}
 
-	s := strings.Split("Y-m-d H:i:s"," ")
+	s := strings.Split(data.Format, " ")
 	
 	var (
 		date string
