@@ -100,27 +100,40 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 		query.Where(where, [...]string{inSearch})
 	}
 
-	for i, val := range search {
-		operator := fmt.Sprintf("tempOperator[%s]", val)
-		field := fmt.Sprintf("tempSearch[%s]", val)
+	for i, field := range search {
+		operator := fmt.Sprintf("tempOperator[%s]", field)
+		find := fmt.Sprintf("tempSearch[%s]", field)
 
-		value := c.PostForm(field)
+		value := c.PostForm(find)
 		if value != "" {
-			i++
 			op := c.PostForm(operator)
-			where := fmt.Sprintf("%s %s ?", val, op)
+			
+			// Handle different operators
+			switch op {
+			case "LIKE", "NOT LIKE":
+				query.Where(fmt.Sprintf("%s %s ?", field, op), "%"+value+"%")
+			case "IN", "NOT IN":
+				query.Where(fmt.Sprintf("%s %s (?)", field, op), strings.Split(value, ","))
+			case "IS", "IS NOT":
+				if strings.ToUpper(value) == "NULL" {
+					query.Where(fmt.Sprintf("%s %s NULL", field, op))
+				} else {
+					query.Where(fmt.Sprintf("%s %s ?", field, op), value)
+				}
+			default:
+				query.Where(fmt.Sprintf("%s %s ?", field, op), value)
+			}
 
-			query.Where(where, value)
 		}
 
 		//SEARCH VALUE
 		searchBox := c.PostForm("search[value]")
 		if searchBox != "" {
 			if i == 0 {
-				where := fmt.Sprintf("%s LIKE ?", val)
+				where := fmt.Sprintf("%s LIKE ?", field)
 				query.Where(where, "%"+searchBox+"%")
 			} else {
-				where := fmt.Sprintf("%s LIKE ?", val)
+				where := fmt.Sprintf("%s LIKE ?", field)
 				query.Or(where, "%"+searchBox+"%")
 			}
 		}
@@ -135,7 +148,9 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 	var recordsTotal int64
 	var results []map[string]interface{}
 
-	query.Limit(limit).Offset(offset).Find(&results).Count(&recordsTotal)
+	query.Count(&recordsTotal)
+	query.Limit(limit).Offset(offset).Find(&results)
+
 	return map[string]interface{}{
 		"status":          true,
 		"draw":            draw,
@@ -145,7 +160,7 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 	}
 }
 
-//TRANSACTION
+// TRANSACTION
 func (met *Jamet) GetRequest(c *gin.Context) []byte {
 
 	defer met.ErrorLog()
@@ -256,7 +271,7 @@ func (met *Jamet) WriteCache(previx string, data any, d string) {
 
 	format := met.Redis[d]
 
-	if format.On && data != nil{
+	if format.On && data != nil {
 
 		client := redis.NewClient(&redis.Options{
 			Addr:     fmt.Sprintf("%s:%s", format.Host, format.Port),
@@ -310,7 +325,7 @@ func (met *Jamet) DelCache(previx string, d string) {
 				panic(err)
 			}
 
-			n++;
+			n++
 		}
 
 		fmt.Printf("deleted %d keys\n", n)
