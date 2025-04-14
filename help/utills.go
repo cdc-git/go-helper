@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -167,16 +168,6 @@ func Unrupiah(nilai string) int64 {
 	return int64(result)
 }
 
-
-/** 
----- UPDATE V0.1.9 ----
-
-* ADD CONVERT ANY DATA TO DATETIME FORMAT PHP
-* GET TIME
-* EPOCH TIME
-
-*/
-
 type DateTime struct {
 	Data   any
 	Format string
@@ -287,3 +278,53 @@ func DateFormat(data DateTime) (string,int64) {
 
 	return result, epoch.Unix()
 } 
+
+/**
+-- UPDATE V0.1.7 --
+
+GET DPP PAJAK
+*/
+
+
+
+func RumusDpp(tanggal *string) float64 {
+	// Use current date if no date is provided
+	var tgl string
+	if tanggal == nil || *tanggal == "" {
+		tgl, _ = DateFormat(DateTime{Format: "Y-m-d"})
+	} else {
+		tgl = *tanggal
+	}
+
+	// Validate date format
+	_, err := time.Parse("2006-01-02", tgl)
+	if err != nil {
+		return 0
+	}
+
+	pajak := 1.0 // Default tax rate
+	tanggalBatas := map[string]float64{
+		"2025-01-01": 11.0 / 12.0,
+		// "2025-02-01": 1.0,
+		// "2026-01-01": 1.0,
+	}
+
+	// Sort batas dates in descending order
+	var batasDates []string
+	for batas := range tanggalBatas {
+		batasDates = append(batasDates, batas)
+	}
+	sort.Sort(sort.Reverse(sort.StringSlice(batasDates)))
+
+	// Find the correct tax rate
+	parsedTanggal, _ := time.Parse("2006-01-02", tgl)
+	for _, batas := range batasDates {
+		parsedBatas, _ := time.Parse("2006-01-02", batas)
+		if parsedTanggal.After(parsedBatas) || parsedTanggal.Equal(parsedBatas) {
+			pajak = tanggalBatas[batas]
+			break
+		}
+	}
+
+	return pajak
+}
