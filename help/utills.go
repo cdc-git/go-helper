@@ -173,20 +173,20 @@ type DateTime struct {
 	Format string
 }
 
-func DateFormat(data DateTime) (string,int64) {
+func DateFormat(data DateTime) (string, int64) {
 
 	if data.Format == "" {
 		data.Format = "Y-m-d H:i:s"
 	}
 
 	s := strings.Split(data.Format, " ")
-	
+
 	var (
-		date string
-		hour string
+		date   string
+		hour   string
 		format string
 	)
-	
+
 	date = s[0]
 
 	ds := []string{"-", " ", "/", ""}
@@ -203,81 +203,80 @@ func DateFormat(data DateTime) (string,int64) {
 		d := strings.Split(date, string(ds[index]))
 
 		var tmp []string
-		
-		for i := 0;i < len(d);i++ {
+
+		for i := 0; i < len(d); i++ {
 			switch d[i] {
 			case "Y":
-				tmp = append(tmp,"2006")
+				tmp = append(tmp, "2006")
 			case "y":
-				tmp = append(tmp,"06")
+				tmp = append(tmp, "06")
 			case "M":
-				tmp = append(tmp,"Jan")
+				tmp = append(tmp, "Jan")
 			case "m":
-				tmp = append(tmp,"01")
+				tmp = append(tmp, "01")
 			case "F":
-				tmp = append(tmp,"January")
+				tmp = append(tmp, "January")
 			case "d":
-				tmp = append(tmp,"02")
+				tmp = append(tmp, "02")
 			case "D":
-				tmp = append(tmp,"Mon")
+				tmp = append(tmp, "Mon")
 			}
 		}
-		
-		format += strings.Join(tmp,ds[index])
+
+		format += strings.Join(tmp, ds[index])
 	}
 
-	
 	if len(s) == 2 {
 		hour = s[1]
-		hs := []string{":", " ", "/", "","-"}
-		
-		format += " ";
+		hs := []string{":", " ", "/", "", "-"}
+
+		format += " "
 		//hour
 		status, i := Contains(hs, hour)
 		if status {
-	
+
 			index, err := strconv.Atoi(i)
 			if err != nil {
 				panic("error on formatting date time")
 			}
-	
+
 			h := strings.Split(hour, string(hs[index]))
-			
-			var tmp []string			
-			for i := 0;i < len(h);i++ {
+
+			var tmp []string
+			for i := 0; i < len(h); i++ {
 				switch h[i] {
 				case "H":
-					tmp = append(tmp,"15")
+					tmp = append(tmp, "15")
 				case "h":
-					tmp = append(tmp,"03")
+					tmp = append(tmp, "03")
 				case "g":
-					tmp = append(tmp,"3")
+					tmp = append(tmp, "3")
 				case "i":
-					tmp = append(tmp,"04")
+					tmp = append(tmp, "04")
 				case "s":
-					tmp = append(tmp,"05")
+					tmp = append(tmp, "05")
 				}
 			}
-	
-			format += strings.Join(tmp,hs[index])
+
+			format += strings.Join(tmp, hs[index])
 		}
 	}
 
 	var result string
 	if data.Data != nil {
 		result = data.Data.(time.Time).Format(format)
-	}else{
+	} else {
 		rn := time.Now()
 		result = rn.Format(format)
 	}
 
-	epoch, err := time.Parse(format,result)
+	epoch, err := time.Parse(format, result)
 	if err != nil {
 		panic("error on converting to epoch")
 	}
 
 	return result, epoch.Unix()
-} 
+}
 
 /**
 -- UPDATE V0.1.7 --
@@ -285,9 +284,7 @@ func DateFormat(data DateTime) (string,int64) {
 GET DPP PAJAK
 */
 
-
-
-func RumusDpp(tanggal *string) float64 {
+func RumusPajak(tanggal *string, tipe string) float64 {
 	// Use current date if no date is provided
 	var tgl string
 	if tanggal == nil || *tanggal == "" {
@@ -302,11 +299,25 @@ func RumusDpp(tanggal *string) float64 {
 		return 0
 	}
 
-	pajak := 1.0 // Default tax rate
-	tanggalBatas := map[string]float64{
-		"2025-01-01": 11.0 / 12.0,
-		// "2025-02-01": 1.0,
-		// "2026-01-01": 1.0,
+	var pajak float64
+	var tanggalBatas map[string]float64
+
+	if tipe == "ppn" {
+		pajak = 11.0 // Default tax rate
+		tanggalBatas = map[string]float64{
+			"2022-04-01": 11.0,
+			// "2025-02-01": 1.0,
+			// "2026-01-01": 1.0,
+		}
+
+	} else {
+
+		pajak = 1.0 // Default tax rate
+		tanggalBatas = map[string]float64{
+			"2025-01-01": 11.0 / 12.0,
+			// "2025-02-01": 1.0,
+			// "2026-01-01": 1.0,
+		}
 	}
 
 	// Sort batas dates in descending order
