@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -61,7 +62,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 		var contain bool
 		var index string
 		cond := strings.Split(value, "|")
-		formData := request[key].(string)
+		formData := reflect.ValueOf(request[key]).String()
 
 		contain, _ = Contains(cond, "required")
 		if contain && formData == "" {
@@ -338,4 +339,13 @@ func RumusPajak(tanggal *string, tipe string) float64 {
 	}
 
 	return pajak
+}
+
+func IsEmpty(data []any) bool {
+
+	if len(data) > 0 {
+		return true
+	} else {
+		return false
+	}
 }

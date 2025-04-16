@@ -51,13 +51,21 @@ func (met *Jamet) CreateData(c *gin.Context, table *gorm.DB, field []string) map
 		if check != "" {
 			query.Where(value+" = ?", c.Query(value))
 		}
+
+		in_field := c.Query("in_field")
+		in_search := c.Query("in_search")
+
+		if in_field == value {
+
+			query.Where(value+" in (?)", strings.Split(in_search,","))
+		}
 	}
 
 	var results []map[string]interface{}
 
 	limit, err := strconv.Atoi(c.Query("limit"))
 	if err != nil {
-		query.Find(&results)
+		query.Limit(10).Find(&results)
 	} else {
 		query.Limit(limit).Find(&results)
 	}
@@ -107,7 +115,7 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 		value := c.PostForm(find)
 		if value != "" {
 			op := c.PostForm(operator)
-			
+
 			// Handle different operators
 			switch op {
 			case "LIKE", "NOT LIKE":
@@ -475,6 +483,29 @@ func (met *Jamet) LogSuccess(message string) {
 	met.Logging(jsonData)
 }
 
+func (met *Jamet) LogCustom(tipe string, message string) {
+
+	data, err := os.ReadFile("go.mod")
+	if err != nil {
+		fmt.Println("Error reading go.mod:", err)
+		return
+	}
+
+	lines := strings.Split(string(data), "\n")
+
+	jsonData, err := json.Marshal(map[string]interface{}{
+		"type":    tipe,
+		"message": message,
+		"module":  strings.Fields(lines[0])[1],
+	})
+
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	met.Logging(jsonData)
+}
+
 func (met *Jamet) Logging(body []byte) {
 
 	defer met.ErrorLog()
@@ -501,7 +532,34 @@ func (met *Jamet) Logging(body []byte) {
 
 		log.Println("Response Status:", resp.Status)
 	}
-
 }
 
 // end update logging
+
+// update request
+func (met *Jamet) PostXT(url string, body []byte) *http.Response {
+
+	defer met.ErrorLog()
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(body))
+	if err != nil {
+		message := fmt.Sprintf("Error creating request: %s", err)
+		panic(message)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Length", string(len(body)))
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		message := fmt.Sprintf("Error sending request: %s", err)
+		panic(message)
+	}
+
+	defer resp.Body.Close()
+
+	log.Println("Response Status:", resp.Status)
+
+	return resp
+}
