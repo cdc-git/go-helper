@@ -57,7 +57,7 @@ func (met *Jamet) CreateData(c *gin.Context, table *gorm.DB, field []string) map
 
 		if in_field == value {
 
-			query.Where(value+" in (?)", strings.Split(in_search, ","))
+			query.Where(value+" in (?)", strings.Split(in_search,","))
 		}
 	}
 
@@ -98,7 +98,7 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 
 	query := table
 
-	//WHERE
+	// //WHERE
 	inField := c.PostForm("in_field")
 	inSearch := c.PostForm("in_search")
 
@@ -108,8 +108,8 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 		query.Where(where, [...]string{inSearch})
 	}
 
-	searchValue := make(map[string]string)
-	for _, field := range search {
+	var searchField string
+	for i, field := range search {
 		operator := fmt.Sprintf("tempOperator[%s]", field)
 		find := fmt.Sprintf("tempSearch[%s]", field)
 
@@ -138,11 +138,18 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 		//SEARCH VALUE
 		searchBox := c.PostForm("search[value]")
 		if searchBox != "" {
-			searchValue[field] = "%" + searchBox + "%"
+			
+			searchField += field+" LIKE '%"+searchBox+"%'"
+			if i != len(search)-1 {
+				searchField += " OR "
+			}
 		}
 	}
 
-	query.Or(searchValue)
+
+	if searchField != "" {	
+		query.Where(fmt.Sprintf("(%s)", searchField))
+	}
 
 	tempSort := c.PostForm("tempSort")
 
