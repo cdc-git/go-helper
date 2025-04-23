@@ -541,7 +541,7 @@ func (met *Jamet) Logging(body []byte) {
 // end update logging
 
 // update request
-func (met *Jamet) PostXT(url string, body []byte) *http.Response {
+func (met *Jamet) PostXT(url string, body []byte,header map[string]string) map[string]interface{} {
 
 	defer met.ErrorLog()
 
@@ -554,6 +554,13 @@ func (met *Jamet) PostXT(url string, body []byte) *http.Response {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Content-Length", string(len(body)))
 
+	if len(header) > 0 {
+
+		for key , val := range header {
+			req.Header.Set(key, val)
+		}
+	}
+
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -565,5 +572,17 @@ func (met *Jamet) PostXT(url string, body []byte) *http.Response {
 
 	log.Println("Response Status:", resp.Status)
 
-	return resp
+	response, err := io.ReadAll(resp.Body)
+	if err != nil {
+		panic(fmt.Sprintf("Error reading response body: %s", err))
+	}
+
+	var data map[string]interface{}
+	err = json.Unmarshal(response, &data)
+	if err != nil {
+		msg := fmt.Sprint("Error unmarshaling JSON:", err)
+		panic(msg)
+	}
+
+	return data
 }
