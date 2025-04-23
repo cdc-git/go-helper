@@ -44,7 +44,7 @@ func ArrayKey(ar map[string]interface{}) []string {
 
 func Contains(s []string, str string) (bool, string) {
 	for i, v := range s {
-		if strings.Contains(str, v) {
+		if strings.Contains(v, str) {
 			index := fmt.Sprintf("%d", i)
 			return true, index
 		}
@@ -344,6 +344,17 @@ func RumusPajak(tanggal *string, tipe string) float64 {
 func IsEmpty(data []any) bool {
 
 	if len(data) > 0 {
+		return true
+	} else {
+		return false
+	}
+}
+
+func EmptyString(data interface{}) bool {
+
+	x := data.(string)
+
+	if x == "" {
 		return true
 	} else {
 		return false
