@@ -76,8 +76,6 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 					errMessage = append(errMessage, fmt.Sprintf("%s perlu diisi", key))
 				}
 			}
-
-			continue
 		}
 
 		//min
@@ -97,7 +95,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 				break
 			}
 
-			if len(formData) < min {
+			if len(formData) < min && formData != "" {
 				if len(alias) > 0 && alias[key] != "" {
 					errMessage = append(errMessage, fmt.Sprintf("Panjang %s kurang dari %d", alias[key], min))
 				} else {
@@ -124,7 +122,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 				break
 			}
 
-			if len(formData) > max {
+			if len(formData) > max  && formData != "" {
 				if len(alias) > 0 && alias[key] != "" {
 					errMessage = append(errMessage, fmt.Sprintf("Panjang %s lebih dari %d", alias[key], max))
 				} else {
@@ -133,6 +131,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 				continue
 			}
 		}
+
 	}
 
 	if len(errMessage) > 0 {
