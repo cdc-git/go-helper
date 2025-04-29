@@ -296,13 +296,13 @@ func DateFormat(data DateTime) (string, int64) {
 GET DPP PAJAK
 */
 
-func RumusPajak(tanggal *string, tipe string) float64 {
+func RumusPajak(tanggal string, tipe string) float64 {
 	// Use current date if no date is provided
 	var tgl string
-	if tanggal == nil || *tanggal == "" {
+	if tanggal == "" {
 		tgl, _ = DateFormat(DateTime{Format: "Y-m-d"})
 	} else {
-		tgl = *tanggal
+		tgl = tanggal
 	}
 
 	// Validate date format
