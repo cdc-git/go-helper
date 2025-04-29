@@ -57,7 +57,7 @@ func (met *Jamet) CreateData(c *gin.Context, table *gorm.DB, field []string) map
 
 		if in_field == value {
 
-			query.Where(value+" in (?)", strings.Split(in_search,","))
+			query.Where(value+" in (?)", strings.Split(in_search, ","))
 		}
 	}
 
@@ -138,16 +138,15 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 		//SEARCH VALUE
 		searchBox := c.PostForm("search[value]")
 		if searchBox != "" {
-			
-			searchField += field+" LIKE '%"+searchBox+"%'"
+
+			searchField += field + " LIKE '%" + searchBox + "%'"
 			if i != len(search)-1 {
 				searchField += " OR "
 			}
 		}
 	}
 
-
-	if searchField != "" {	
+	if searchField != "" {
 		query.Where(fmt.Sprintf("(%s)", searchField))
 	}
 
@@ -155,6 +154,22 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 
 	if tempSort != "" {
 		query.Order(tempSort)
+	}
+
+	//unmarshal request
+	var req map[string]interface{}
+	if err := json.Unmarshal([]byte(c.PostForm("alfred_hari_bersatu")), &req); err != nil {
+		fmt.Println(err)
+	}
+
+	ordering := req["order"].([]interface{})
+	for i := 0; i < len(ordering); i++ {
+		columnIndex := c.PostForm(fmt.Sprintf("order[%d][column]", i))
+		dir := c.PostForm(fmt.Sprintf("order[%d][dir]", i))
+
+		column := c.PostForm(fmt.Sprintf("columns[%v][data]", columnIndex))
+
+		query.Order(column + " " + dir)
 	}
 
 	var recordsTotal int64
@@ -541,7 +556,7 @@ func (met *Jamet) Logging(body []byte) {
 // end update logging
 
 // update request
-func (met *Jamet) PostXT(url string, body []byte,header map[string]string) map[string]interface{} {
+func (met *Jamet) PostXT(url string, body []byte, header map[string]string) map[string]interface{} {
 
 	defer met.ErrorLog()
 
@@ -556,7 +571,7 @@ func (met *Jamet) PostXT(url string, body []byte,header map[string]string) map[s
 
 	if len(header) > 0 {
 
-		for key , val := range header {
+		for key, val := range header {
 			req.Header.Set(key, val)
 		}
 	}
