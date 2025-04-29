@@ -162,14 +162,17 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 		fmt.Println(err)
 	}
 
-	ordering := req["order"].([]interface{})
-	for i := 0; i < len(ordering); i++ {
-		columnIndex := c.PostForm(fmt.Sprintf("order[%d][column]", i))
-		dir := c.PostForm(fmt.Sprintf("order[%d][dir]", i))
+	if req["order"] != nil {
+		ordering := req["order"].([]interface{})
 
-		column := c.PostForm(fmt.Sprintf("columns[%v][data]", columnIndex))
-
-		query.Order(column + " " + dir)
+		for i := 0; i < len(ordering); i++ {
+			columnIndex := c.PostForm(fmt.Sprintf("order[%d][column]", i))
+			dir := c.PostForm(fmt.Sprintf("order[%d][dir]", i))
+	
+			column := c.PostForm(fmt.Sprintf("columns[%v][data]", columnIndex))
+	
+			query.Order(column + " " + dir)
+		}
 	}
 
 	var recordsTotal int64
