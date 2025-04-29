@@ -42,13 +42,25 @@ func ArrayKey(ar map[string]interface{}) []string {
 	return keys
 }
 
-func Contains(s []string, str string) (bool, string) {
+func InArray(s []string, str string) (bool, string) {
 	for i, v := range s {
 		if strings.Contains(v, str) {
 			index := fmt.Sprintf("%d", i)
 			return true, index
 		}
 	}
+	return false, ""
+}
+
+func Contains(tmp []string, str string) (bool,string){
+	for i, val := range tmp {
+
+		if strings.Contains(str, val) {
+			index := fmt.Sprintf("%d", i)
+			return true, index
+		}
+	}
+
 	return false, ""
 }
 
@@ -64,7 +76,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 		cond := strings.Split(value, "|")
 		formData := reflect.ValueOf(request[key]).String()
 
-		contain, _ = Contains(cond, "required")
+		contain, _ = InArray(cond, "required")
 		if contain && formData == "" {
 
 			if len(message) > 0 && message[key] != "" {
@@ -79,7 +91,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 		}
 
 		//min
-		contain, index = Contains(cond, "min")
+		contain, index = InArray(cond, "min")
 		if contain {
 
 			i, err := strconv.Atoi(index)
@@ -106,7 +118,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 		}
 
 		//max
-		contain, index = Contains(cond, "max")
+		contain, index = InArray(cond, "max")
 		if contain {
 
 			i, err := strconv.Atoi(index)
@@ -122,7 +134,7 @@ func Validation(request map[string]interface{}, format map[string]map[string]str
 				break
 			}
 
-			if len(formData) > max  && formData != "" {
+			if len(formData) > max && formData != "" {
 				if len(alias) > 0 && alias[key] != "" {
 					errMessage = append(errMessage, fmt.Sprintf("Panjang %s lebih dari %d", alias[key], max))
 				} else {
