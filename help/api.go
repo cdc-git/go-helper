@@ -83,7 +83,7 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 	//MANDATORY
 	draw, err := strconv.Atoi(c.PostForm("draw"))
 	if err != nil {
-		panic("draw not found")
+		log.Println("draw not found")
 	}
 
 	limit, err := strconv.Atoi(c.PostForm("length"))

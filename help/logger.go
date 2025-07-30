@@ -21,9 +21,6 @@ type LoggerConfig struct {
 	Url           string
 }
 
-type Shit struct {
-	Slow string
-}
 
 func NewLogger(config LoggerConfig) *LoggerConfig {
 	return &LoggerConfig{
