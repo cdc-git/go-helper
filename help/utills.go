@@ -397,13 +397,13 @@ func HtmlTo(tipe, filepath, temp string, data map[string]interface{}) string {
 		log.Fatal("Error executing template:", err)
 	}
 
-	htmlPath := "./files22/output.html"
+	htmlPath := "./files/output.html"
 	err = os.WriteFile(htmlPath, buf.Bytes(), 0644)
 	if err != nil {
 		log.Fatal("Error saving HTML:", err)
 	}
 
-	path := "./files22" + filepath
+	path := "./files" + filepath
 
 	switch tipe {
 	case "html":
