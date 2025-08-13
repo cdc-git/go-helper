@@ -20,6 +20,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	"github.com/google/uuid"
+	"github.com/xuri/excelize/v2"
 )
 
 // get UUID
@@ -435,4 +436,20 @@ func HtmlTo(tipe, filepath, temp string, data map[string]interface{}) string {
 	}
 
 	return filepath
+}
+
+func SaveExcel(f *excelize.File, path string, filename string) (bool, string) {
+
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		err = os.MkdirAll(path, os.ModeDir|0755)
+		if err != nil {
+			return false, "Error creating directory: " + err.Error()
+		}
+	}
+
+	if err := f.SaveAs(fmt.Sprintf("%s/%s", path, filename)); err != nil {
+		return false, err.Error()
+	}
+
+	return true, ""
 }
