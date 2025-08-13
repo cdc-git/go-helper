@@ -1,11 +1,16 @@
 package help
 
 import (
+	"bytes"
 	"crypto/md5"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
+	ranmath "math/rand"
 	"net/http"
+	"os"
+	"os/exec"
 	"reflect"
 	"sort"
 	"strconv"
@@ -52,7 +57,7 @@ func InArray(s []string, str string) (bool, string) {
 	return false, ""
 }
 
-func Contains(tmp []string, str string) (bool,string){
+func Contains(tmp []string, str string) (bool, string) {
 	for i, val := range tmp {
 
 		if strings.Contains(str, val) {
@@ -370,4 +375,64 @@ func EmptyString(data interface{}) bool {
 	} else {
 		return false
 	}
+}
+
+/** ----- UPDATE V0.3.0 YEAH -------- */
+func Ranum() int {
+	randomizer := ranmath.New(ranmath.NewSource(time.Now().UTC().UnixNano()))
+	return randomizer.Int()
+}
+
+func HtmlTo(tipe, filepath, temp string, data map[string]interface{}) string {
+
+	tmpl, err := template.ParseFiles("templates" + temp)
+	if err != nil {
+		log.Fatal("Error parsing template:", err)
+	}
+
+	var buf bytes.Buffer
+	err = tmpl.Execute(&buf, data)
+	if err != nil {
+		log.Fatal("Error executing template:", err)
+	}
+
+	htmlPath := "./files/output.html"
+	err = os.WriteFile(htmlPath, buf.Bytes(), 0644)
+	if err != nil {
+		log.Fatal("Error saving HTML:", err)
+	}
+
+	path := "./files" + filepath
+
+	switch tipe {
+	case "html":
+		data, err := os.ReadFile(htmlPath)
+
+		if err != nil {
+			log.Fatalf("gagal baca html")
+		}
+
+		filepath = string(data)
+
+	case "jpg":
+		cmd := exec.Command("wkhtmltoimage", htmlPath, path)
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Fatalf("Gagal membuat Image: %v\nOutput: %s", err, out)
+		}
+
+		log.Println("✅ Image berhasil dibuat:", path)
+	default:
+		cmd := exec.Command("wkhtmltopdf", htmlPath, path)
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Fatalf("Gagal membuat PDF: %v\nOutput: %s", err, out)
+		}
+
+		log.Println("✅ PDF berhasil dibuat:", path)
+	}
+
+	return filepath
 }
