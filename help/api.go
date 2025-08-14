@@ -11,6 +11,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-sql-driver/mysql"
@@ -168,9 +169,9 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 		for i := 0; i < len(ordering); i++ {
 			columnIndex := c.PostForm(fmt.Sprintf("order[%d][column]", i))
 			dir := c.PostForm(fmt.Sprintf("order[%d][dir]", i))
-	
+
 			column := c.PostForm(fmt.Sprintf("columns[%v][data]", columnIndex))
-	
+
 			query.Order(column + " " + dir)
 		}
 	}
@@ -309,17 +310,29 @@ func (met *Jamet) WriteCache(previx string, data any, d string) {
 			DB:       format.Database, // Use default DB
 		})
 
-		jsonStr, err := json.Marshal(data)
-		if err != nil {
-			panic(err)
-		}
+		if d == "report" {
 
-		res, err := client.Set(ctx, previx, jsonStr, 0).Result()
-		if err != nil {
-			panic(err)
-		}
+			res, err := client.Set(ctx, previx, data, time.Hour*24).Result()
+			if err != nil {
+				panic(err)
+			}
 
-		log.Println(res)
+			log.Println(res)
+
+		} else {
+
+			jsonStr, err := json.Marshal(data)
+			if err != nil {
+				panic(err)
+			}
+
+			res, err := client.Set(ctx, previx, jsonStr, 0).Result()
+			if err != nil {
+				panic(err)
+			}
+
+			log.Println(res)
+		}
 	}
 }
 
