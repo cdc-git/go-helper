@@ -1,3 +1,9 @@
+Dari Master Golang untuk para jamet
+
+*"Jamet Helper bagiku bukan cuma sekedar helper* 
+*lebih jauh dari itu melibatkan perasaan yang bersamaku ketika sunyi"*
+                                                                -Pidi Baok
+
 Robinson Understand of America or Ghostjumper Ghostjumper Jumper Ghost Jumper Samping Nyelekaya Gunjamatan Regensi Pasuan Isjopo Indonesia Saya akan tampil di Stadion London Egress Saya akan tampil di Stadion London Egress 
 
 
