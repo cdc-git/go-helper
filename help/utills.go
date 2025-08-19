@@ -361,9 +361,9 @@ func RumusPajak(tanggal string, tipe string) float64 {
 func IsEmpty(data []any) bool {
 
 	if len(data) > 0 {
-		return true
-	} else {
 		return false
+	} else {
+		return true
 	}
 }
 
