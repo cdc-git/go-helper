@@ -518,20 +518,12 @@ func (met *Jamet) LogSuccess(message string) {
 	met.Logging(jsonData)
 }
 
-func (met *Jamet) LogCustom(tipe string, message string) {
-
-	data, err := os.ReadFile("go.mod")
-	if err != nil {
-		fmt.Println("Error reading go.mod:", err)
-		return
-	}
-
-	lines := strings.Split(string(data), "\n")
+func (met *Jamet) LogCustom(namaModule,tipe, message string) {
 
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"type":    tipe,
 		"message": message,
-		"module":  strings.Fields(lines[0])[1],
+		"module":  namaModule,
 	})
 
 	if err != nil {
