@@ -6,11 +6,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"html/template"
+	"io"
 	"log"
 	ranmath "math/rand"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"reflect"
 	"sort"
 	"strconv"
@@ -436,6 +439,43 @@ func HtmlTo(tipe, filepath, temp string, data map[string]interface{}) string {
 	}
 
 	return filepath
+}
+
+
+func SaveFile(path string, file *multipart.FileHeader) (bool, string) {
+
+	src, err := file.Open()
+	if err != nil {
+		return false, "internal server error"
+
+	}
+
+	defer src.Close()
+
+	folderPath := path
+
+	if _, err := os.Stat(folderPath); os.IsNotExist(err) {
+		err = os.MkdirAll(folderPath, os.ModeDir|0755)
+		if err != nil {
+			return false, "Error creating directory: " + err.Error()
+		}
+	}
+
+	dstPath := filepath.Join(folderPath, file.Filename)
+
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		return false, "internal server error"
+
+	}
+
+	defer dst.Close()
+
+	if _, err = io.Copy(dst, src); err != nil {
+		return false, "internal server error"
+	}
+
+	return true, path + "/" + file.Filename
 }
 
 func SaveExcel(f *excelize.File, path string, filename string) (bool, string) {
