@@ -21,7 +21,6 @@ type LoggerConfig struct {
 	Url           string
 }
 
-
 func NewLogger(config LoggerConfig) *LoggerConfig {
 	return &LoggerConfig{
 		SlowThreshold: config.SlowThreshold,
@@ -41,7 +40,7 @@ func (l *LoggerConfig) Info(ctx context.Context, msg string, data ...interface{}
 	if l.LogLevel >= logger.Info {
 		l.logger.Printf(msg, data...)
 
-		l._log("info", fmt.Sprintf(msg, data...))
+		// l._log("info", fmt.Sprintf(msg, data...))
 	}
 }
 
@@ -79,21 +78,9 @@ func (l *LoggerConfig) Trace(ctx context.Context, begin time.Time, fc func() (st
 			tipe = "error"
 			message = fmt.Sprintf("[%.3fms] [rows:%v] %s error: %v", float64(elapsed.Nanoseconds())/1e6, rows, sql, err)
 
-		case l.SlowThreshold != 0 && elapsed > l.SlowThreshold && l.LogLevel >= logger.Warn:
-			sql, rows := fc()
-			l.logger.Printf("[%.3fms] [rows:%v] SLOW SQL >= %v\n%s", float64(elapsed.Nanoseconds())/1e6, rows, l.SlowThreshold, sql)
-
-			tipe = "info"
-			message = fmt.Sprintf("[%.3fms] [rows:%v] SLOW SQL >= %v\n%s", float64(elapsed.Nanoseconds())/1e6, rows, l.SlowThreshold, sql)
-		case l.LogLevel >= logger.Info:
-			sql, rows := fc()
-			l.logger.Printf("[%.3fms] [rows:%v] %s", float64(elapsed.Nanoseconds())/1e6, rows, sql)
-
-			tipe = "debug"
-			message = fmt.Sprintf("[%.3fms] [rows:%v] %s", float64(elapsed.Nanoseconds())/1e6, rows, sql)
+			l._log(tipe, message)
 		}
 
-		l._log(tipe, message)
 	}
 }
 
