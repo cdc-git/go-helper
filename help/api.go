@@ -8,7 +8,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -381,7 +380,7 @@ func (met *Jamet) ErrorLog() {
 
 	if message != nil {
 		log.Println(message)
-		met.LogFatal(message.(string))
+		met.LogFatal("system", message.(string))
 	} else {
 		fmt.Println("---- No Error have a nice day  ----")
 	}
@@ -403,20 +402,12 @@ Success ✅ → Buat ngumumin sesuatu berhasil, kayak "Orderan lo sukses, siap�
 "success"
 */
 
-func (met *Jamet) LogDebug(message string) {
-
-	data, err := os.ReadFile("go.mod")
-	if err != nil {
-		fmt.Println("Error reading go.mod:", err)
-		return
-	}
-
-	lines := strings.Split(string(data), "\n")
+func (met *Jamet) LogDebug(module, message string) {
 
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"type":    "debug",
 		"message": message,
-		"module":  strings.Fields(lines[0])[1],
+		"module":  module,
 	})
 
 	if err != nil {
@@ -426,20 +417,12 @@ func (met *Jamet) LogDebug(message string) {
 	met.Logging(jsonData)
 }
 
-func (met *Jamet) LogInfo(message string) {
-
-	data, err := os.ReadFile("go.mod")
-	if err != nil {
-		fmt.Println("Error reading go.mod:", err)
-		return
-	}
-
-	lines := strings.Split(string(data), "\n")
+func (met *Jamet) LogInfo(module, message string) {
 
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"type":    "info",
 		"message": message,
-		"module":  strings.Fields(lines[0])[1],
+		"module":  module,
 	})
 
 	if err != nil {
@@ -449,20 +432,12 @@ func (met *Jamet) LogInfo(message string) {
 	met.Logging(jsonData)
 }
 
-func (met *Jamet) LogError(message string) {
-
-	data, err := os.ReadFile("go.mod")
-	if err != nil {
-		fmt.Println("Error reading go.mod:", err)
-		return
-	}
-
-	lines := strings.Split(string(data), "\n")
+func (met *Jamet) LogError(module, message string) {
 
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"type":    "error",
 		"message": message,
-		"module":  strings.Fields(lines[0])[1],
+		"module":  module,
 	})
 
 	if err != nil {
@@ -472,20 +447,12 @@ func (met *Jamet) LogError(message string) {
 	met.Logging(jsonData)
 }
 
-func (met *Jamet) LogFatal(message string) {
-
-	data, err := os.ReadFile("go.mod")
-	if err != nil {
-		fmt.Println("Error reading go.mod:", err)
-		return
-	}
-
-	lines := strings.Split(string(data), "\n")
+func (met *Jamet) LogFatal(module, message string) {
 
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"type":    "fatal",
 		"message": message,
-		"module":  strings.Fields(lines[0])[1],
+		"module":  module,
 	})
 
 	if err != nil {
@@ -495,20 +462,12 @@ func (met *Jamet) LogFatal(message string) {
 	met.Logging(jsonData)
 }
 
-func (met *Jamet) LogSuccess(message string) {
-
-	data, err := os.ReadFile("go.mod")
-	if err != nil {
-		fmt.Println("Error reading go.mod:", err)
-		return
-	}
-
-	lines := strings.Split(string(data), "\n")
+func (met *Jamet) LogSuccess(module, message string) {
 
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"type":    "success",
 		"message": message,
-		"module":  strings.Fields(lines[0])[1],
+		"module":  module,
 	})
 
 	if err != nil {
@@ -518,7 +477,7 @@ func (met *Jamet) LogSuccess(message string) {
 	met.Logging(jsonData)
 }
 
-func (met *Jamet) LogCustom(namaModule,tipe, message string) {
+func (met *Jamet) LogCustom(namaModule, tipe, message string) {
 
 	jsonData, err := json.Marshal(map[string]interface{}{
 		"type":    tipe,
