@@ -279,8 +279,8 @@ func (met *Jamet) ReadCache(previx string, d string) (bool, map[string]interface
 
 		val, err := client.Get(ctx, previx).Result()
 		if err != nil {
-			met.LogError(err.Error())
-			met.LogError(fmt.Sprintf("Gagal dalam membaca cache %s", previx))
+			met.LogError("system", err.Error())
+			met.LogError("system", fmt.Sprintf("Gagal dalam membaca cache %s", previx))
 			return false, map[string]interface{}{}
 		}
 
