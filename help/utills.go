@@ -24,6 +24,7 @@ import (
 	"github.com/gin-gonic/gin/render"
 	"github.com/google/uuid"
 	"github.com/xuri/excelize/v2"
+	"github.com/chenhg5/collection"
 )
 
 // get UUID
@@ -39,6 +40,10 @@ func PrintJSON(c *gin.Context, response any) {
 // return JSON status false
 func EPrintJSON(c *gin.Context, response any) {
 	c.Render(http.StatusBadRequest, render.JSON{Data: response})
+}
+
+func Collect(src interface{}) collection.Collection {
+	return collection.Collect(src)
 }
 
 func ArrayKey(ar map[string]interface{}) []string {
