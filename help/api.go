@@ -178,8 +178,8 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 			}
 		}
 	} else {
-		
-		// No more json.Unmarshal, no more alfred_hari_bersatu
+
+		// No more json.Unmarshal, no more alfred_hari_bersatuxxxxxxxxx
 
 		for i := 0; ; i++ {
 			// example: order[0][column]
