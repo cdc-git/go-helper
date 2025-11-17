@@ -157,21 +157,53 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 	}
 
 	//unmarshal request
-	var req map[string]interface{}
-	if err := json.Unmarshal([]byte(c.PostForm("alfred_hari_bersatu")), &req); err != nil {
-		fmt.Println(err)
-	}
 
-	if req["order"] != nil {
-		ordering := req["order"].([]interface{})
+	if c.PostForm("alfred_hari_bersatu") != "" {
 
-		for i := 0; i < len(ordering); i++ {
+		var req map[string]interface{}
+		if err := json.Unmarshal([]byte(c.PostForm("alfred_hari_bersatu")), &req); err != nil {
+			fmt.Println(err)
+		}
+
+		if req["order"] != nil {
+			ordering := req["order"].([]interface{})
+
+			for i := 0; i < len(ordering); i++ {
+				columnIndex := c.PostForm(fmt.Sprintf("order[%d][column]", i))
+				dir := c.PostForm(fmt.Sprintf("order[%d][dir]", i))
+
+				column := c.PostForm(fmt.Sprintf("columns[%v][data]", columnIndex))
+
+				query.Order(column + " " + dir)
+			}
+		}
+	} else {
+		
+		// No more json.Unmarshal, no more alfred_hari_bersatu
+
+		for i := 0; ; i++ {
+			// example: order[0][column]
 			columnIndex := c.PostForm(fmt.Sprintf("order[%d][column]", i))
+			if columnIndex == "" {
+				// when this is empty, it means there is no more order[i]
+				break
+			}
+
+			// example: order[0][dir]
 			dir := c.PostForm(fmt.Sprintf("order[%d][dir]", i))
+			if dir != "asc" && dir != "desc" {
+				dir = "asc" // default / safety
+			}
 
-			column := c.PostForm(fmt.Sprintf("columns[%v][data]", columnIndex))
+			// example: columns[3][data]
+			column := c.PostForm(fmt.Sprintf("columns[%s][data]", columnIndex))
+			if column == "" {
+				continue // skip if column name not found
+			}
 
-			query.Order(column + " " + dir)
+			// ⚠️ best practice: whitelist column for safety (avoid SQL injection)
+			// but if you've already validated column, then:
+			query = query.Order(column + " " + dir)
 		}
 	}
 
