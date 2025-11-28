@@ -20,11 +20,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/chenhg5/collection"
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/render"
 	"github.com/google/uuid"
 	"github.com/xuri/excelize/v2"
-	"github.com/chenhg5/collection"
 )
 
 // get UUID
@@ -329,13 +329,22 @@ func RumusPajak(tanggal string, tipe string) float64 {
 	var tanggalBatas map[string]float64
 
 	if tipe == "ppn" {
+
+		pajak = 10.0 // Default tax rate
+		tanggalBatas = map[string]float64{
+			"2025-01-01": 12.0,
+			"2022-04-01": 11.0,
+			// "2025-02-01": 1.0,
+			// "2026-01-01": 1.0,
+		}
+	} else if tipe == "ppn_baru" {
+		
 		pajak = 11.0 // Default tax rate
 		tanggalBatas = map[string]float64{
 			"2022-04-01": 11.0,
 			// "2025-02-01": 1.0,
 			// "2026-01-01": 1.0,
 		}
-
 	} else {
 
 		pajak = 1.0 // Default tax rate
@@ -445,7 +454,6 @@ func HtmlTo(tipe, filepath, temp string, data map[string]interface{}) string {
 
 	return filepath
 }
-
 
 func SaveFile(path string, file *multipart.FileHeader) (bool, string) {
 
