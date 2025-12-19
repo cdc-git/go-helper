@@ -248,6 +248,152 @@ func (met *Jamet) Connection(conn string) *gorm.DB {
 	return db.Begin()
 }
 
+/* ================ LOG UPDATE v0.5.0 ===================== */
+func (met *Jamet) FindStock(db *gorm.DB, part_no, branch_code, kios_code, rak_code string) (bool, int64) {
+
+	var res map[string]interface{}
+	if part_no == "" {
+		return false, 0
+	}
+	if branch_code == "" {
+		return false, 0
+	}
+	if kios_code == "" {
+		return false, 0
+	}
+	if rak_code == "" {
+		return false, 0
+	}
+
+	search := []interface{}{
+		part_no,
+		branch_code,
+		kios_code,
+		rak_code,
+		part_no,
+		branch_code,
+		kios_code,
+		rak_code,
+		part_no,
+		branch_code,
+		kios_code,
+		rak_code,
+	}
+
+	db.Raw(`
+	SELECT
+  a.qonhawal + a.qonhinout AS qty_onh,
+  a.qbookawal + a.qbookinout AS qty_book
+  FROM
+  (
+    SELECT
+      b.part_no,
+      b.part_desc,
+      SUM(b.qty_onh) AS qonhawal,
+      SUM(b.qty_book) AS qbookawal,
+      SUM(b.inout_onh) AS qonhinout,
+      SUM(b.inout_book) AS qbookinout,
+      b.kios_code,
+      b.rak_code,
+      b.branch_code,
+      b.company_code
+    FROM
+      (
+        SELECT
+          part_no,
+          qty_onh,
+          qty_book,
+          0 AS inout_onh,
+          0 AS inout_book,
+          part_desc,
+          kios_code,
+          rak_code,
+          branch_code,
+          company_code
+        FROM
+          saldo_harian_stocks
+        WHERE
+          periode = CURDATE() - INTERVAL 1 DAY
+          AND part_no = ?
+          AND branch_code = ?
+          AND kios_code = ?
+          AND rak_code = ?
+        GROUP BY
+          part_no,
+          branch_code,
+          kios_code,
+          rak_code UNION ALL
+        SELECT
+          product_kode AS part_no,
+          0 AS qty_onh,
+          0 AS qty_book,
+          SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_onh,
+          0 AS inout_book,
+          part_desc,
+          kios_code,
+          rak_code,
+          branch_code,
+          company_code
+        FROM
+          trinvs
+        WHERE
+          tgl_trans = CURDATE()
+          AND fisik_act = 'F'
+          AND type_stock = 'ONH'
+          AND product_kode = ?
+          AND branch_code = ?
+          AND kios_code = ?
+          AND rak_code = ?
+        GROUP BY
+          product_kode,
+          branch_code,
+          kios_code,
+          rak_code UNION ALL
+        SELECT
+          product_kode AS part_no,
+          0 AS qty_onh,
+          0 AS qty_book,
+          0 AS inout_onh,
+          SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_book,
+          part_desc,
+          kios_code,
+          rak_code,
+          branch_code,
+          company_code
+        FROM
+          trinvs
+        WHERE
+          tgl_trans = CURDATE()
+          AND fisik_act = 'F'
+          AND type_stock = 'BOOK'
+          AND product_kode = ?
+          AND branch_code = ?
+          AND kios_code = ?
+          AND rak_code = ?
+        GROUP BY
+          product_kode,
+          branch_code,
+          kios_code,
+          rak_code
+      ) b
+    GROUP BY
+      b.part_no,
+      b.branch_code,
+      b.kios_code,
+      b.rak_code
+  		) a;
+	`, search...).Find(&res)
+
+	if len(res) == 0 {
+		return false, 0
+	} else {
+		return true, res["qty_onh"].(int64) - res["qty_book"].(int64)
+	}
+}
+
+
+/* ================ LOG UPDATE v0.5.0 ===================== */
+
 func (met *Jamet) SinchronizeID(db *gorm.DB, id string, char string, format int32) string {
 
 	defer met.ErrorLog()
