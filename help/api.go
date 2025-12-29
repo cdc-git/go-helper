@@ -249,150 +249,274 @@ func (met *Jamet) Connection(conn string) *gorm.DB {
 }
 
 /* ================ LOG UPDATE v0.5.0 ===================== */
-func (met *Jamet) FindStock(db *gorm.DB, part_no, branch_code, kios_code, rak_code string) (bool, int64) {
+func (met *Jamet) FindStock(db *gorm.DB, part_no, branch_code, kios_code, rak_code, tipe string) (bool, []map[string]interface{}) {
 
-	var res map[string]interface{}
-	if part_no == "" {
-		return false, 0
-	}
-	if branch_code == "" {
-		return false, 0
-	}
-	if kios_code == "" {
-		return false, 0
-	}
-	if rak_code == "" {
-		return false, 0
-	}
+	var res []map[string]interface{}
+	var search []interface{}
+	var query string
 
-	search := []interface{}{
-		part_no,
-		branch_code,
-		kios_code,
-		rak_code,
-		part_no,
-		branch_code,
-		kios_code,
-		rak_code,
-		part_no,
-		branch_code,
-		kios_code,
-		rak_code,
-	}
+	if tipe != "all" {
 
-	db.Raw(`
-	SELECT
-  a.qonhawal + a.qonhinout AS qty_onh,
-  a.qbookawal + a.qbookinout AS qty_book
-  FROM
-  (
-    SELECT
-      b.part_no,
-      b.part_desc,
-      SUM(b.qty_onh) AS qonhawal,
-      SUM(b.qty_book) AS qbookawal,
-      SUM(b.inout_onh) AS qonhinout,
-      SUM(b.inout_book) AS qbookinout,
-      b.kios_code,
-      b.rak_code,
-      b.branch_code,
-      b.company_code
-    FROM
-      (
-        SELECT
-          part_no,
-          qty_onh,
-          qty_book,
-          0 AS inout_onh,
-          0 AS inout_book,
-          part_desc,
-          kios_code,
-          rak_code,
-          branch_code,
-          company_code
-        FROM
-          saldo_harian_stocks
-        WHERE
-          periode = CURDATE() - INTERVAL 1 DAY
-          AND part_no = ?
-          AND branch_code = ?
-          AND kios_code = ?
-          AND rak_code = ?
-        GROUP BY
-          part_no,
-          branch_code,
-          kios_code,
-          rak_code UNION ALL
-        SELECT
-          product_kode AS part_no,
-          0 AS qty_onh,
-          0 AS qty_book,
-          SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_onh,
-          0 AS inout_book,
-          part_desc,
-          kios_code,
-          rak_code,
-          branch_code,
-          company_code
-        FROM
-          trinvs
-        WHERE
-          tgl_trans = CURDATE()
-          AND fisik_act = 'F'
-          AND type_stock = 'ONH'
-          AND product_kode = ?
-          AND branch_code = ?
-          AND kios_code = ?
-          AND rak_code = ?
-        GROUP BY
-          product_kode,
-          branch_code,
-          kios_code,
-          rak_code UNION ALL
-        SELECT
-          product_kode AS part_no,
-          0 AS qty_onh,
-          0 AS qty_book,
-          0 AS inout_onh,
-          SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_book,
-          part_desc,
-          kios_code,
-          rak_code,
-          branch_code,
-          company_code
-        FROM
-          trinvs
-        WHERE
-          tgl_trans = CURDATE()
-          AND fisik_act = 'F'
-          AND type_stock = 'BOOK'
-          AND product_kode = ?
-          AND branch_code = ?
-          AND kios_code = ?
-          AND rak_code = ?
-        GROUP BY
-          product_kode,
-          branch_code,
-          kios_code,
-          rak_code
-      ) b
-    GROUP BY
-      b.part_no,
-      b.branch_code,
-      b.kios_code,
-      b.rak_code
-  		) a;
-	`, search...).Find(&res)
+		if part_no == "" {
+			return false, res
+		}
+		if branch_code == "" {
+			return false, res
+		}
+		if kios_code == "" {
+			return false, res
+		}
+		if rak_code == "" {
+			return false, res
+		}
 
-	if len(res) == 0 {
-		return false, 0
+		search = []interface{}{
+			part_no,
+			branch_code,
+			kios_code,
+			rak_code,
+			part_no,
+			branch_code,
+			kios_code,
+			rak_code,
+			part_no,
+			branch_code,
+			kios_code,
+			rak_code,
+		}
+
+		query = `
+		SELECT
+		a.part_no,
+		a.kios_code,
+		a.rak_code,
+		a.branch_code,
+	  a.qonhawal + a.qonhinout AS qty_onh,
+	  a.qbookawal + a.qbookinout AS qty_book
+	  FROM
+	  (
+		SELECT
+		  b.part_no,
+		  b.part_desc,
+		  SUM(b.qty_onh) AS qonhawal,
+		  SUM(b.qty_book) AS qbookawal,
+		  SUM(b.inout_onh) AS qonhinout,
+		  SUM(b.inout_book) AS qbookinout,
+		  b.kios_code,
+		  b.rak_code,
+		  b.branch_code,
+		  b.company_code
+		FROM
+		  (
+			SELECT
+			  part_no,
+			  qty_onh,
+			  qty_book,
+			  0 AS inout_onh,
+			  0 AS inout_book,
+			  part_desc,
+			  kios_code,
+			  rak_code,
+			  branch_code,
+			  company_code
+			FROM
+			  saldo_harian_stocks
+			WHERE
+			  periode = CURDATE() - INTERVAL 1 DAY
+			  AND part_no = ?
+			  AND branch_code = ?
+			  AND kios_code = ?
+			  AND rak_code = ?
+			GROUP BY
+			  part_no,
+			  branch_code,
+			  kios_code,
+			  rak_code UNION ALL
+			SELECT
+			  product_kode AS part_no,
+			  0 AS qty_onh,
+			  0 AS qty_book,
+			  SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_onh,
+			  0 AS inout_book,
+			  part_desc,
+			  kios_code,
+			  rak_code,
+			  branch_code,
+			  company_code
+			FROM
+			  trinvs
+			WHERE
+			  tgl_trans = CURDATE()
+			  AND fisik_act = 'F'
+			  AND type_stock = 'ONH'
+			  AND product_kode = ?
+			  AND branch_code = ?
+			  AND kios_code = ?
+			  AND rak_code = ?
+			GROUP BY
+			  product_kode,
+			  branch_code,
+			  kios_code,
+			  rak_code UNION ALL
+			SELECT
+			  product_kode AS part_no,
+			  0 AS qty_onh,
+			  0 AS qty_book,
+			  0 AS inout_onh,
+			  SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_book,
+			  part_desc,
+			  kios_code,
+			  rak_code,
+			  branch_code,
+			  company_code
+			FROM
+			  trinvs
+			WHERE
+			  tgl_trans = CURDATE()
+			  AND fisik_act = 'F'
+			  AND type_stock = 'BOOK'
+			  AND product_kode = ?
+			  AND branch_code = ?
+			  AND kios_code = ?
+			  AND rak_code = ?
+			GROUP BY
+			  product_kode,
+			  branch_code,
+			  kios_code,
+			  rak_code
+		  ) b
+		GROUP BY
+		  b.part_no,
+		  b.branch_code,
+		  b.kios_code,
+		  b.rak_code
+			  ) a;
+		`
+
 	} else {
 
-		onh, _ := strconv.ParseInt(res["qty_onh"].(string), 10, 64)
-		book, _ := strconv.ParseInt(res["qty_book"].(string), 10, 64)
+		if branch_code == "" {
+			return false, res
+		}
+		if kios_code == "" {
+			return false, res
+		}
 
-		return true, onh - book
+		search = []interface{}{
+			branch_code,
+			kios_code,
+			branch_code,
+			kios_code,
+			branch_code,
+			kios_code,
+		}
+
+		query = `
+		SELECT
+		a.part_no,
+		a.kios_code,
+		a.rak_code,
+		a.branch_code,
+	  a.qonhawal + a.qonhinout AS qty_onh,
+	  a.qbookawal + a.qbookinout AS qty_book
+	  FROM
+	  (
+		SELECT
+		  b.part_no,
+		  b.part_desc,
+		  SUM(b.qty_onh) AS qonhawal,
+		  SUM(b.qty_book) AS qbookawal,
+		  SUM(b.inout_onh) AS qonhinout,
+		  SUM(b.inout_book) AS qbookinout,
+		  b.kios_code,
+		  b.rak_code,
+		  b.branch_code,
+		  b.company_code
+		FROM
+		  (
+			SELECT
+			  part_no,
+			  qty_onh,
+			  qty_book,
+			  0 AS inout_onh,
+			  0 AS inout_book,
+			  part_desc,
+			  kios_code,
+			  rak_code,
+			  branch_code,
+			  company_code
+			FROM
+			  saldo_harian_stocks
+			WHERE
+			  periode = CURDATE() - INTERVAL 1 DAY
+			  AND branch_code = ?
+			  AND kios_code = ?
+			GROUP BY
+			  part_no,
+			  branch_code,
+			  kios_code,
+			  rak_code UNION ALL
+			SELECT
+			  product_kode AS part_no,
+			  0 AS qty_onh,
+			  0 AS qty_book,
+			  SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_onh,
+			  0 AS inout_book,
+			  part_desc,
+			  kios_code,
+			  rak_code,
+			  branch_code,
+			  company_code
+			FROM
+			  trinvs
+			WHERE
+			  tgl_trans = CURDATE()
+			  AND fisik_act = 'F'
+			  AND type_stock = 'ONH'
+			  AND branch_code = ?
+			  AND kios_code = ?
+			GROUP BY
+			  product_kode,
+			  branch_code,
+			  kios_code,
+			  rak_code UNION ALL
+			SELECT
+			  product_kode AS part_no,
+			  0 AS qty_onh,
+			  0 AS qty_book,
+			  0 AS inout_onh,
+			  SUM(IF(in_out = 'IN', unit, unit * - 1)) AS inout_book,
+			  part_desc,
+			  kios_code,
+			  rak_code,
+			  branch_code,
+			  company_code
+			FROM
+			  trinvs
+			WHERE
+			  tgl_trans = CURDATE()
+			  AND fisik_act = 'F'
+			  AND type_stock = 'BOOK'
+			  AND branch_code = ?
+			  AND kios_code = ?
+			GROUP BY
+			  product_kode,
+			  branch_code,
+			  kios_code,
+			  rak_code
+		  ) b
+		GROUP BY
+		  b.part_no,
+		  b.branch_code,
+		  b.kios_code,
+		  b.rak_code
+			  ) a;
+		`
 	}
+
+	db.Raw(query, search...).Find(&res)
+
+	return true, res
 }
 
 /* ================ LOG UPDATE v0.5.0 ===================== */
