@@ -387,10 +387,13 @@ func (met *Jamet) FindStock(db *gorm.DB, part_no, branch_code, kios_code, rak_co
 	if len(res) == 0 {
 		return false, 0
 	} else {
-		return true, res["qty_onh"].(int64) - res["qty_book"].(int64)
+
+		onh, _ := strconv.ParseInt(res["qty_onh"].(string), 10, 64)
+		book, _ := strconv.ParseInt(res["qty_book"].(string), 10, 64)
+
+		return true, onh - book
 	}
 }
-
 
 /* ================ LOG UPDATE v0.5.0 ===================== */
 
