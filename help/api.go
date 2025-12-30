@@ -288,6 +288,7 @@ func (met *Jamet) FindStock(db *gorm.DB, part_no, branch_code, kios_code, rak_co
 		query = `
 		SELECT
 		a.part_no,
+		a.part_desc,
 		a.kios_code,
 		a.rak_code,
 		a.branch_code,
