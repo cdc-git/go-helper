@@ -121,6 +121,10 @@ func (met *Jamet) CreateDataTable(c *gin.Context, table *gorm.DB, search []strin
 			switch op {
 			case "LIKE", "NOT LIKE":
 				query.Where(fmt.Sprintf("%s %s ?", field, op), "%"+value+"%")
+			case "PREFIX": // starts with
+				query.Where(fmt.Sprintf("%s LIKE ?", field), value+"%")
+			case "SUFFIX": // ends with
+				query.Where(fmt.Sprintf("%s LIKE ?", field), "%"+value)
 			case "IN", "NOT IN":
 				query.Where(fmt.Sprintf("%s %s (?)", field, op), strings.Split(value, ","))
 			case "IS", "IS NOT":
