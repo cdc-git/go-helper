@@ -845,7 +845,6 @@ func (met *Jamet) PostXT(url string, body []byte, header map[string]string) map[
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Content-Length", string(len(body)))
 
 	if len(header) > 0 {
 
