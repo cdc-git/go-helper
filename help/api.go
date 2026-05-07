@@ -834,7 +834,7 @@ func (met *Jamet) Logging(body []byte) {
 // end update logging
 
 // update request
-func (met *Jamet) PostXT(url string, body []byte, header map[string]string) map[string]interface{} {
+func (met *Jamet) PostXT(url string, body []byte, header map[string]string,to int) map[string]interface{} {
 
 	defer met.ErrorLog()
 
@@ -853,7 +853,10 @@ func (met *Jamet) PostXT(url string, body []byte, header map[string]string) map[
 		}
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: time.Duration(to) * time.Second,
+	}
+	
 	resp, err := client.Do(req)
 	if err != nil {
 		message := fmt.Sprintf("Error sending request: %s", err)
